@@ -16,6 +16,12 @@ connectDB();
 app.use(express.json())
 
 
+// import routes
+
+import authRouter from './src/routes/auth.route.js';
+app.use('/api/v1/auth', authRouter);
+
+
 //error handling
 app.use((err, req, res, next) =>
     {
