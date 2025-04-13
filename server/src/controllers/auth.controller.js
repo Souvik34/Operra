@@ -137,6 +137,12 @@ export const getUser = async(req, res, next) =>{
 }
 
 export const updateUser = async(req, res, next) =>{
+    try {
+        
+    } catch (error) {
+        next(error);
+        
+    }
 }
 
 export const signout = async(req, res, next) =>{
