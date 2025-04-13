@@ -62,6 +62,60 @@ export const signup = async(req, res, next) =>{
 }
 
 export const signin = async(req, res, next) =>{
+    try {
+
+        const{
+            email,
+            password,
+        } = req.body;
+
+        const validUser = await User.findOne({email});
+
+        if(!validUser){
+            return next(errorHandler(404, 'User not found'));
+        }
+
+        // check password
+
+        const validPassword = await validUser.comparePassword(password);
+        if(!validPassword){
+            return next(errorHandler(400, 'Invalid password'));
+        }
+
+        // check if user is active
+        
+        if(!validUser.isActive){
+            return next(errorHandler(403, 'User is not active'));
+        }
+
+        // generate tokens
+        const accessToken = validUser.generateAccessToken();
+        const refreshToken = validUser.generateRefreshToken();
+
+         // Store refresh token in HttpOnly cookie
+         res.cookie("refresh_token", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+
+        });
+
+        // Send response with tokens
+        res.status(200).json({
+            success: true,
+            message: "Signin successful!",
+            accessToken,
+            user: {
+                id: validUser._id,
+                username: validUser.username,
+                email: validUser.email,
+            },
+        });
+        
+    } catch (error) {
+        next(error);
+        
+    }
 }
 
 export const getUser = async(req, res, next) =>{

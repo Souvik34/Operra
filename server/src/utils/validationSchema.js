@@ -7,3 +7,8 @@ export const signupSchema = z.object({
   profileImage: z.string().optional(),
   adminInviteToken: z.string().optional(),
 });
+
+export const signinSchema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
