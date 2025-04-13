@@ -7,7 +7,6 @@ import upload from '../middlewares/upload.middleware.js';
 import { uploadImage } from '../controllers/upload.controller.js';
 const router = Router();
 
-
 router.route('/signup').post(validate(signupSchema), signup);
 router.route('/signin').post(validate(signinSchema), signin)
 router.route('/profile').get(verifyToken, getUser);

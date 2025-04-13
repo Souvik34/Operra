@@ -21,6 +21,8 @@ app.use(express.json())
 import authRouter from './src/routes/auth.route.js';
 app.use('/api/v1/auth', authRouter);
 
+import userRouter from './src/routes/user.route.js';
+app.use('/api/v1/user', userRouter);
 
 //error handling
 app.use((err, req, res, next) =>
