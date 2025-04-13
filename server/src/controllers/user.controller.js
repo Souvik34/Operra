@@ -46,7 +46,39 @@ export const getUsers = async (req, res, next) => {
 };
 
 
-export const getUserById = async (req, res, next) => { }
+export const getUserById = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password -__v');
+        if (!user) {
+            return next(errorHandler(404, 'User not found'));
+        }
+        res.status(200).json({
+            success: true,
+            message: 'User found',
+            data: user,
+        });
+    } catch (error) {
+        next(error);
+        
+    }
+ }
 
-export const deleteUser = async (req, res, next) => { }
+export const deleteUser = async (req, res, next) => { 
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return next(errorHandler(404, 'User not found'));
+        }
+
+        await user.remove();
+
+        res.status(200).json({
+            success: true,
+            message: 'User deleted successfully',
+        });
+    } catch (error) {
+        next(error);
+        
+    }
+}
 
