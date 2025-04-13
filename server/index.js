@@ -24,6 +24,10 @@ app.use('/api/v1/auth', authRouter);
 import userRouter from './src/routes/user.route.js';
 app.use('/api/v1/user', userRouter);
 
+import taskRouter from './src/routes/task.route.js';
+app.use('/api/v1/task', taskRouter);
+
+
 //error handling
 app.use((err, req, res, next) =>
     {
