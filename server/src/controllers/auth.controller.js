@@ -136,16 +136,73 @@ export const getUser = async(req, res, next) =>{
     }
 }
 
-export const updateUser = async(req, res, next) =>{
+export const updateUser = async (req, res, next) => {
     try {
-        
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return next(errorHandler(404, 'User not found'));
+      }
+  
+      const { username, email, profileImage, role, isActive, password } = req.body;
+  
+      // Update only allowed fields
+      user.username = username || user.username;
+      user.email = email || user.email;
+      user.profileImage = profileImage || user.profileImage;
+  
+      
+      if (req.user.role === 'admin') {
+        user.role = role || user.role;
+        user.isActive = typeof isActive === 'boolean' ? isActive : user.isActive;
+      }
+  
+      // Handle password update 
+      if (password) {
+        user.password = password;
+      }
+  
+      const updatedUser = await user.save();
+  
+      res.status(200).json({
+        success: true,
+        message: 'User updated successfully',
+        data: {
+          id: updatedUser._id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          isActive: updatedUser.isActive,
+          profileImage: updatedUser.profileImage,
+          timestamp: updatedUser.updatedAt,
+        },
+      });
+  
     } catch (error) {
-        next(error);
-        
+      next(error);
     }
-}
+  };
+  
 
 export const signout = async(req, res, next) =>{
+    try {
+        if (!req.cookies.refresh_token) {  
+            return next(errorHandler(401, "Signout failed: User not logged in"));
+        }
+
+        res.clearCookie("refresh_token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Signout successful!",
+        });
+
+    } catch (error) {
+        next(error);
+    }
 }
 
 
