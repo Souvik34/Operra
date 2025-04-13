@@ -83,7 +83,7 @@ export const signin = async(req, res, next) =>{
         }
 
         // check if user is active
-        
+
         if(!validUser.isActive){
             return next(errorHandler(403, 'User is not active'));
         }
@@ -119,6 +119,21 @@ export const signin = async(req, res, next) =>{
 }
 
 export const getUser = async(req, res, next) =>{
+    try {
+        const user = await User.findById(req.user.id).select('-password -__v -createdAt -updatedAt');
+        if(!user){
+            return next(errorHandler(404, 'User not found'));
+        }
+        res.status(200).json({
+            success: true,
+            message: 'User found',
+            data: user,
+        });
+        
+    } catch (error) {
+        next(error);
+        
+    }
 }
 
 export const updateUser = async(req, res, next) =>{
