@@ -123,6 +123,33 @@ export const createTask = async (req, res, next) => {
 
 export const updateTask = async (req, res, next) => {
     try {
+
+        const task = await Task.findById(req.params.id);
+        if(!task) 
+        return next(errorHandler(404, 'Task not found'));
+
+        task.title = req.body.title || task.title;
+        task.description = req.body.description || task.description;
+        task.priority = req.body.priority || task.priority;
+        task.dueDate = req.body.dueDate || task.dueDate;
+        task.todoCheckList = req.body.todoCheckList || task.todoCheckList;
+        task.attachments = req.body.attachments || task.attachments;
+
+        if(req.body.assignedTo)
+        {
+            if(!Array.isArray(req.body.assignedTo)){
+                return next(errorHandler(400, 'Assigned to should be an array'));
+            }
+            task.assignedTo = req.body.assignedTo;
+        }
+       const updatedTask = await task.save();
+
+       
+        res.status(200).json({
+            success: true,
+            message: 'Task updated successfully',
+            data: updatedTask,
+        });
         
     } catch (error) {
         next(error);
