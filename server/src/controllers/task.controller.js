@@ -224,7 +224,51 @@ export const updateTaskStatus = async (req, res, next) => {
 
 export const updateTaskList = async (req, res, next) => {
     try {
+        const {todoCheckList} = req.body;
+        const task = await Task.findById(req.params.id);
+
+        if(!task)
+        return next(errorHandler(404, 'Task not found'));
+
+        if(!task.assignedTo.map(id => id.toString()).includes(req.user.id.toString())&& req.user.role !== 'admin')
+        return next(errorHandler(403, 'You are not authorized to update this task'));
         
+        if (!Array.isArray(todoCheckList)) {
+            return next(errorHandler(400, 'Invalid todo checklist format'));
+        }
+        
+
+        task.todoCheckList = todoCheckList; // Update the todoCheckList with the new data
+
+        // Auto update progress based on completed todos
+
+        const completedCount =task.todoCheckList.filter(item => item.completed).length;
+        const totalCount = task.todoCheckList.length;
+
+        task.progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0; // Calculate progress as a percentage
+
+        // Auto mark completed
+        if (task.progress === 100) {
+            task.status = 'Completed'; // Update status to Completed
+        } else if (task.progress > 0) {
+            task.status = 'In Progress'; // Update status to In Progress
+        } else {
+            task.status = 'To Do'; // Update status to To Do
+        }
+
+        const updatedTask = await Task.findByIdAndUpdate(
+            req.params.id,
+            { $set: { todoCheckList, progress: task.progress, status: task.status } },
+            { new: true }
+          ).populate('assignedTo', 'username email profileImage').lean();
+          
+
+        res.status(200).json({
+            success: true,
+            message: 'Task checklist updated successfully',
+            data: updatedTask,
+        })
+
     } catch (error) {
         next(error);
         
@@ -233,7 +277,73 @@ export const updateTaskList = async (req, res, next) => {
 
 export const getDashboardData = async (req, res, next) => {
     try {
-        
+        //fetch stats
+
+        const allTasks = await Task.countDocuments({});
+        const completedTasks = await Task.countDocuments({ status: 'Completed' });
+        const pendingTasks = await Task.countDocuments({ status: 'To Do' });
+        const overdueTasks =  await Task.countDocuments({
+            status: {$ne: 'Completed'},
+            dueDate :{$lt: new Date()},
+        })
+
+        const taskStatus = ["To Do", "In Progress", "Completed"];
+        const taskDistributionRaw = await Task.aggregate([
+            {
+            $group: {
+                _id: '$status',
+                count: { $sum: 1},
+            },
+        },
+        ]);
+
+        const taskDistribution = taskStatus.reduce((acc, status)=>{
+            const formattedKey = status.replace(/\s+/g, ""); // Remove spaces
+            acc[formattedKey]= 
+            taskDistributionRaw.find((item)=> item._id === status)?.count || 0;
+            return acc;
+        }, {});
+        taskDistribution['All'] = allTasks // Add total count to taskDistribution
+
+        //all priority tasks are included or not 
+
+        const taskPriority = ['Low', 'Medium', 'High'];
+        const taskPriorityLevelRaw = await Task.aggregate([
+            {
+                $group:{
+                    _id: "$priority",
+                    count :{$sum: 1},
+                },
+            },
+        ]);
+
+        const taskPriorityLevel = taskPriority.reduce((acc, priority)=> {
+            acc[priority]= taskPriorityLevelRaw.find((item) => item._id === priority)?.count || 0;
+            return acc;
+        }, {});
+
+
+        // Fetch recent 10 tasks
+
+        const recentTasks = await Task.find()
+        .sort({ createdAt: -1})
+        .limit(10)
+        .select('title status priority dueDate createdAt');
+
+        res.status(200).json({
+            statistics: {
+                allTasks,
+                pendingTasks,
+                completedTasks,
+                overdueTasks,
+            },
+            charts: {
+                taskDistribution,
+                taskPriorityLevel,
+            },
+            recentTasks,
+        });
+
     } catch (error) {
         next(error);
         
