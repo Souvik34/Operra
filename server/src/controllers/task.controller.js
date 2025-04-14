@@ -177,14 +177,50 @@ export const deleteTask = async (req, res, next) => {
 }
 
 export const updateTaskStatus = async (req, res, next) => {
-
     try {
-        
+      const { id } = req.params;
+      const { status } = req.body;
+  
+      if (!status) {
+        return next(errorHandler(400, 'Status is required'));
+      }
+  
+      const task = await Task.findById(id);
+      if (!task) {
+        return next(errorHandler(404, 'Task not found'));
+      }
+  
+      const isAssigned = task.assignedTo.some(
+        (userId) => userId.toString() === req.user.id.toString()
+      );
+  
+      if (!isAssigned && req.user.role !== 'admin') {
+        return next(errorHandler(403, 'You are not authorized to update this task'));
+      }
+  
+      task.status = status;
+  
+      if (status === 'Completed') {
+        task.todoCheckList = task.todoCheckList.map((item) => ({
+          ...item,
+          completed: true,
+        }));
+        task.progress = 100;
+      }
+  
+      await task.save();
+  
+      res.status(200).json({
+        success: true,
+        message: 'Task status updated successfully',
+        data: task,
+      });
+  
     } catch (error) {
-        next(error);
-        
+      next(error);
     }
-}
+  };
+  
 
 export const updateTaskList = async (req, res, next) => {
     try {

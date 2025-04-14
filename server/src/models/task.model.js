@@ -26,6 +26,11 @@ const taskSchema = new mongoose.Schema({
         enum: ['Low', 'Medium', 'High'],
         default: 'Low',
     },
+    status:{
+        type: String,
+        enum: ['To Do', 'In Progress', 'Completed'],
+        default: 'To Do',
+    },
     dueDate: {
         type: Date,
         required: true,
