@@ -144,7 +144,7 @@ export const updateTask = async (req, res, next) => {
         }
        const updatedTask = await task.save();
 
-       
+
         res.status(200).json({
             success: true,
             message: 'Task updated successfully',
@@ -159,6 +159,16 @@ export const updateTask = async (req, res, next) => {
 
 export const deleteTask = async (req, res, next) => {
     try {
+        const task = await Task.findById(req.params.id);
+        if(!task) 
+        return next(errorHandler(404, 'Task not found'));
+
+        await task.deleteOne();
+
+        res.status(200).json({
+            success: true,
+            message: 'Task deleted successfully',
+        });
         
     } catch (error) {
         next(error);
