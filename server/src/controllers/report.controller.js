@@ -48,6 +48,8 @@ export const exportTaskReport = async (req, res, next) => {
 
         await workbook.xlsx.write(res);
         res.end();
+
+        
     } catch (error) {
         next(error);
     }
