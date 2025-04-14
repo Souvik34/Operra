@@ -1,8 +1,61 @@
 import { Task } from "../models/task.model.js";
 
 export const getTasks = async (req, res, next) => {
-    
-}
+    try {
+        const { status } = req.query;
+        const isAdmin = req.user.role === 'admin';
+        const userId = req.user.id;
+
+        // Build filter
+        let filter = {};
+        if (status) filter.status = status;
+        if (!isAdmin) filter.assignedTo = userId;
+
+        // Fetch tasks with user info
+        let tasks = await Task.find(filter)
+            .populate('assignedTo', 'username email profileImage')
+            .lean(); // lean for faster query + plain JS objects
+
+        // Append completedTodosCount
+        tasks = tasks.map(task => {
+            const completedTodos = (task.todoCheckList || []).filter(todo => todo.completed).length;
+            return {
+                ...task,
+                completedTodosCount: completedTodos,
+            };
+        });
+
+        // Status summary counts
+        const buildCount = async (statusValue) =>
+            Task.countDocuments({
+                ...(statusValue && { status: statusValue }),
+                ...(isAdmin ? {} : { assignedTo: userId }),
+            });
+
+        const [allTasks, completedTasks, inProgressTasks, pendingTasks] = await Promise.all([
+            buildCount(),
+            buildCount('Completed'),
+            buildCount('In Progress'),
+            buildCount('Pending'),
+        ]);
+
+        res.json({
+            success: true,
+            message: 'Tasks fetched successfully',
+            data: tasks,
+            summary: {
+                allTasks,
+                completedTasks,
+                inProgressTasks,
+                pendingTasks,
+            },
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 export const getTaskById = async (req, res, next) => {
 
@@ -23,7 +76,7 @@ export const createTask = async (req, res, next) => {
             dueDate,
             assignedTo,
             attachments,
-            todoChecklist,
+            todoCheckList,
         } = req.body;
 
         if(!Array.isArray(assignedTo)){
@@ -35,9 +88,9 @@ export const createTask = async (req, res, next) => {
             priority,
             dueDate,
             assignedTo,
-            createdBy: req.user._id,
+            createdBy: req.user.id,
             attachments,
-            todoChecklist,
+            todoCheckList,
         }); 
         await task.save();
 

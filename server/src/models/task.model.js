@@ -44,7 +44,7 @@ const taskSchema = new mongoose.Schema({
             type: String,
         }
     ],
-    todoChecklist: [todoSchema],
+    todoCheckList: [todoSchema],
     progress: {
         type: Number,
         default: 0,
