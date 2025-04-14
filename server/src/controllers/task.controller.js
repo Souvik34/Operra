@@ -6,7 +6,7 @@ export const getTasks = async (req, res, next) => {
         const isAdmin = req.user.role === 'admin';
         const userId = req.user.id;
 
-        // Build filter
+        
         let filter = {};
         if (status) filter.status = status;
         if (!isAdmin) filter.assignedTo = userId;
@@ -14,7 +14,7 @@ export const getTasks = async (req, res, next) => {
         // Fetch tasks with user info
         let tasks = await Task.find(filter)
             .populate('assignedTo', 'username email profileImage')
-            .lean(); // lean for faster query + plain JS objects
+            .lean(); // lean() to get plain JavaScript objects
 
         // Append completedTodosCount
         tasks = tasks.map(task => {
@@ -60,6 +60,18 @@ export const getTasks = async (req, res, next) => {
 export const getTaskById = async (req, res, next) => {
 
     try {
+        const task = await Task.findById(req.params.id)
+            .populate('assignedTo', 'username email profileImage')
+            .lean();
+
+            if(!task)
+            return next(errorHandler(404, 'Task not found'));
+
+            res.status(200).json({
+                success: true,
+                message: 'Task fetched successfully',
+                data: task,
+            });
         
     } catch (error) {
         next(error);
