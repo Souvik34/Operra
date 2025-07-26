@@ -36,57 +36,105 @@ export default function Signin() {
           placeholder={placeholder}
           {...register(name)}
           className={clsx(
-            "w-full px-4 py-3 pr-10 rounded-md border-2 outline-none shadow-sm",
-            "bg-white text-gray-800 text-[15px] font-medium",
-            isValid && "border-green-500 focus:ring-green-500 focus:border-green-500",
+            "w-full px-4 py-3 pr-10 rounded-md border outline-none shadow-sm",
+            "bg-white/10 text-white placeholder:text-white/70 text-[15px] font-medium",
+            "backdrop-blur-md",
+            isValid && "border-green-400 focus:ring-green-500 focus:border-green-500",
             hasError
-              ? "border-red-500 focus:ring-red-500 focus:border-red-500 scale-105"
-              : "border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-600",
+              ? "border-red-500 focus:ring-red-500 focus:border-red-500 scale-[1.02]"
+              : "border-white/30 focus:ring-2 focus:ring-blue-400 focus:border-blue-500",
             "transition duration-200 ease-in-out"
           )}
         />
 
-        {/* Show password toggle */}
         {isPassword && (
           <div
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-3 cursor-pointer text-gray-500 hover:text-gray-800"
+            className="absolute right-3 top-3 cursor-pointer text-white/70 hover:text-white"
           >
             {showPassword ? <FiEyeOff /> : <FiEye />}
           </div>
         )}
 
-        {/* Error Icon */}
         {hasError && (
           <FiAlertCircle className="absolute right-9 top-3 text-red-500 pointer-events-none" />
         )}
-        {/* Error Text */}
         {hasError && (
-          <p className="text-sm text-red-500 mt-1">{errors[name].message}</p>
+          <p className="text-sm text-red-400 mt-1">{errors[name].message}</p>
         )}
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white shadow-2xl rounded-2xl p-8 border border-gray-200">
-        <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
-          Sign In to Your Account
-        </h2>
+    <div
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{
+        background:
+          "linear-gradient(145deg, #0f0c29, #302b63, #24243e, #3a1c71, #d76d77, #ffaf7b)",
+        backgroundSize: "200% 200%",
+        animation: "gradientMove 12s ease infinite",
+      }}
+    >
+      <div className="w-full max-w-md bg-white/10 border border-white/20 backdrop-blur-md shadow-2xl rounded-2xl p-8">
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
+            <svg
+              className="w-10 h-10 text-white/80"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+              />
+            </svg>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {renderInput("email", "email", "Email")}
+          {renderInput("email", "email", "Email ID")}
           {renderInput("password", "password", "Password", true)}
+
+          <div className="flex justify-between items-center text-white/80 text-sm mt-1">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                className="form-checkbox accent-blue-500 bg-transparent border-white/30"
+              />
+              <span>Remember me</span>
+            </label>
+            <a href="#" className="hover:underline text-sm">
+              Forgot Password?
+            </a>
+          </div>
 
           <button
             type="submit"
-            className="w-full py-3 mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-all font-semibold text-lg"
+            className="w-full py-3 mt-4 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-md transition-all font-semibold text-lg shadow-lg"
           >
-            Sign In
+            LOGIN
           </button>
         </form>
       </div>
+
+      {/* Gradient animation keyframes */}
+      <style jsx="true">{`
+        @keyframes gradientMove {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+      `}</style>
     </div>
   );
 }
