@@ -2,142 +2,109 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signupSchema } from "../../schemas/signupSchema";
-import { FiAlertCircle, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiAlertCircle, FiUserPlus } from "react-icons/fi"; // ✅ Add icon
 import clsx from "clsx";
 
-const SignUp = () => {
-  const [showPassword, setShowPassword] = useState(false);
+export default function Signup() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [animateIcon, setAnimateIcon] = useState(false); // ✅ Animation state
 
   const {
     register,
     handleSubmit,
+    formState: { errors, touchedFields },
     watch,
-    formState: { errors },
   } = useForm({
     resolver: zodResolver(signupSchema),
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const onSubmit = (data) => {
-    // 🎯 Auto-assign a cool avatar here (DiceBear / random logic)
-    const avatarURL = `https://api.dicebear.com/7.x/thumbs/svg?seed=${data.username}`;
-    const finalData = { ...data, profileImage: avatarURL };
-
-    console.log("Submitted:", finalData);
-    // ⚙️ Call your signup API here
+    if (!isAdmin) delete data.adminInviteToken;
+    console.log("Form data:", data);
   };
 
-  const password = watch("password");
+  const renderInput = (name, type, placeholder) => {
+    const hasError = errors[name];
+    const isTouched = touchedFields[name];
+    const value = watch(name);
+    const isValid = !hasError && isTouched && value?.length > 0;
+
+    return (
+      <div className="relative group">
+        <input
+          type={type}
+          placeholder={placeholder}
+          {...register(name)}
+          className={clsx(
+            "w-full px-4 py-3 pr-10 rounded-md border-2 outline-none",
+            "bg-gray-50 text-gray-800 text-[15px] font-medium",
+            isValid && "border-green-500 focus:ring-green-500 focus:border-green-500",
+            hasError
+              ? "border-red-500 focus:ring-red-500 focus:border-red-500 scale-105"
+              : "border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-600",
+            "transition duration-200 ease-in-out"
+          )}
+        />
+        {hasError && (
+          <FiAlertCircle className="absolute right-3 top-3 text-red-500 pointer-events-none" />
+        )}
+        {hasError && (
+          <p className="text-sm text-red-500 mt-1">{errors[name].message}</p>
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white px-4">
-      <div className="w-full max-w-md p-8 space-y-6 shadow-lg rounded-xl bg-black/90 text-white">
-        <h2 className="text-3xl font-bold text-center text-blue-400">Join Operra</h2>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
-          {/* Username */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Username"
-              {...register("username")}
-              className={clsx(
-                "w-full px-4 py-3 rounded-md bg-white text-black border focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all",
-                errors.username && "border-red-500 scale-105"
-              )}
-            />
-            {errors.username && (
-              <>
-                <FiAlertCircle className="text-red-500 absolute top-3.5 right-3 text-xl" />
-                <p className="text-red-500 mt-1 text-sm">{errors.username.message}</p>
-              </>
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white shadow-xl rounded-xl p-8 border border-gray-200">
+        {/* ✅ Header with icon */}
+        <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center gap-2">
+          <span>Create an Account</span>
+          <FiUserPlus
+            onClick={() => {
+              setAnimateIcon(true);
+              setTimeout(() => setAnimateIcon(false), 500); // Reset after animation
+            }}
+            className={clsx(
+              "text-blue-600 cursor-pointer transition-transform",
+              animateIcon && "animate-bounce"
             )}
-          </div>
+            size={28}
+          />
+        </h2>
 
-          {/* Email */}
-          <div className="relative">
-            <input
-              type="email"
-              placeholder="Email"
-              {...register("email")}
-              className={clsx(
-                "w-full px-4 py-3 rounded-md bg-white text-black border focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all",
-                errors.email && "border-red-500 scale-105"
-              )}
-            />
-            {errors.email && (
-              <>
-                <FiAlertCircle className="text-red-500 absolute top-3.5 right-3 text-xl" />
-                <p className="text-red-500 mt-1 text-sm">{errors.email.message}</p>
-              </>
-            )}
-          </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {renderInput("username", "text", "Username")}
+          {renderInput("email", "email", "Email")}
+          {renderInput("password", "password", "Password")}
+          {renderInput("confirmPassword", "password", "Confirm Password")}
 
-          {/* Password */}
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              {...register("password")}
-              className={clsx(
-                "w-full px-4 py-3 rounded-md bg-white text-black border pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all",
-                errors.password && "border-red-500 scale-105"
-              )}
-            />
-            <span
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute top-3.5 right-10 text-xl text-gray-600 cursor-pointer"
+          {/* Admin Toggle */}
+          <div className="flex items-center justify-between mt-3">
+            <label className="text-base font-medium text-gray-700">
+              Registering as Admin?
+            </label>
+            <div
+              onClick={() => setIsAdmin(!isAdmin)}
+              className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                isAdmin ? "bg-blue-600" : "bg-gray-300"
+              }`}
             >
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </span>
-            {errors.password && (
-              <>
-                <FiAlertCircle className="text-red-500 absolute top-3.5 right-3 text-xl" />
-                <p className="text-red-500 mt-1 text-sm">{errors.password.message}</p>
-              </>
-            )}
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  isAdmin ? "translate-x-6" : "translate-x-0"
+                }`}
+              />
+            </div>
           </div>
 
-          {/* Confirm Password */}
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Confirm Password"
-              {...register("confirmPassword")}
-              className={clsx(
-                "w-full px-4 py-3 rounded-md bg-white text-black border pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all",
-                errors.confirmPassword && "border-red-500 scale-105"
-              )}
-            />
-            <span
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute top-3.5 right-10 text-xl text-gray-600 cursor-pointer"
-            >
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </span>
-            {errors.confirmPassword && (
-              <>
-                <FiAlertCircle className="text-red-500 absolute top-3.5 right-3 text-xl" />
-                <p className="text-red-500 mt-1 text-sm">{errors.confirmPassword.message}</p>
-              </>
-            )}
-          </div>
+          {isAdmin && renderInput("adminInviteToken", "text", "Admin Invite Token")}
 
-          {/* Admin Invite Token (optional) */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Admin Invite Token (optional)"
-              {...register("adminInviteToken")}
-              className="w-full px-4 py-3 rounded-md bg-white text-black border focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-            />
-          </div>
-
-          {/* Submit */}
           <button
             type="submit"
-            className="w-full py-3 rounded-md bg-blue-500 hover:bg-blue-600 transition-all duration-300 font-semibold text-white shadow-md"
+            className="w-full py-3 mt-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-all font-semibold text-lg"
           >
             Sign Up
           </button>
@@ -145,6 +112,4 @@ const SignUp = () => {
       </div>
     </div>
   );
-};
-
-export default SignUp;
+}
